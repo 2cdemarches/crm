@@ -43,6 +43,9 @@ router.delete('/users/:id', auth, adminOnly, async (req, res) => {
     await db.prepare('UPDATE clients SET created_by=NULL WHERE created_by=?').run(req.params.id);
     await db.prepare('UPDATE dossiers SET assigned_to=NULL WHERE assigned_to=?').run(req.params.id);
     await db.prepare('UPDATE dossiers SET created_by=NULL WHERE created_by=?').run(req.params.id);
+    await db.prepare('UPDATE audit_log SET user_id=NULL WHERE user_id=?').run(req.params.id);
+    await db.prepare('UPDATE statuts_docs SET updated_by=NULL WHERE updated_by=?').run(req.params.id);
+    await db.prepare('UPDATE statut_inpi SET updated_by=NULL WHERE updated_by=?').run(req.params.id);
     await db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
     res.json({ ok:true });
   } catch(e) { res.status(500).json({ error: e.message }); }
