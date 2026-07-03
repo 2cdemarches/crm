@@ -137,7 +137,7 @@ function render(dossier, docs, inpi) {
   const steps = [];
 
   // Étape 1 : Ouverture du dossier (titre selon type)
-  const TYPE_TITLES = { creation:'Création de la formalité', modification:'Modification de la formalité', cessation:'Cessation de la formalité' };
+  const TYPE_TITLES = { creation:'Formalité de création en cours', modification:'Formalité de modification en cours', cessation:'Formalité de cessation en cours' };
   const s1 = activeStep === 1 ? 'active' : 'done';
   steps.push({
     num: 1, state: s1,
