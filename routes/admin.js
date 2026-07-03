@@ -39,6 +39,10 @@ router.delete('/users/:id', auth, adminOnly, async (req, res) => {
     const countRow = await db.prepare("SELECT COUNT(*)::int as c FROM users WHERE role='admin' AND actif=1").get();
     if (user.role==='admin' && countRow.c <= 1)
       return res.status(400).json({ error:'Impossible de supprimer le dernier administrateur' });
+    // Retirer les références avant suppression
+    await db.prepare('UPDATE clients SET created_by=NULL WHERE created_by=?').run(req.params.id);
+    await db.prepare('UPDATE dossiers SET assigned_to=NULL WHERE assigned_to=?').run(req.params.id);
+    await db.prepare('UPDATE dossiers SET created_by=NULL WHERE created_by=?').run(req.params.id);
     await db.prepare('DELETE FROM users WHERE id=?').run(req.params.id);
     res.json({ ok:true });
   } catch(e) { res.status(500).json({ error: e.message }); }
