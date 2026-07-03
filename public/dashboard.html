@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tableau de bord - CRM</title><link rel="stylesheet" href="/css/style.css"></head>
+<body><div class="app">
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>CRM Formalites</h2><p>Cabinet d expertise comptable</p></div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard.html" class="active"><span class="icon">📋</span> Tableau de bord</a>
+    <a href="/admin.html" id="adminLink" class="hidden"><span class="icon">⚙️</span> Parametres</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-name" id="userName"></div>
+    <div class="user-role" id="userRole"></div>
+    <button onclick="logout()">Se deconnecter</button>
+  </div>
+</aside>
+<div class="main">
+  <div class="topbar"><h1>Tableau de bord</h1><button class="btn btn-primary" onclick="openNewDossier()">+ Nouveau dossier</button></div>
+  <div class="content">
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div><div><div class="stat-value" id="statTotal">-</div><div class="stat-label">Total dossiers</div></div></div>
+      <div class="stat-card"><div class="stat-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div><div class="stat-value" id="statEnCours">-</div><div class="stat-label">En cours</div></div></div>
+      <div class="stat-card"><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div><div><div class="stat-value" id="statTermines">-</div><div class="stat-label">Termines</div></div></div>
+      <div class="stat-card"><div class="stat-icon red"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="stat-value" id="statCreation">-</div><div class="stat-label">Creations</div></div></div>
+    </div>
+    <div class="filters" style="align-items:center">
+      <div class="bs" id="flt_type">
+        <button class="bs-trigger" id="flt_type_t" style="background:#f3f4f6;color:var(--gray)" onclick="toggleFlt('flt_type')">Type<span class="bs-arrow">▼</span></button>
+        <div class="bs-menu" id="flt_type_m">
+          <div class="bs-option current" onclick="setFlt('type',null,this)">Tous les types</div>
+          <div class="bs-option" onclick="setFlt('type','creation',this)" style="color:#6d28d9"><span class="bs-option-dot" style="background:#6d28d9"></span>Création</div>
+          <div class="bs-option" onclick="setFlt('type','modification',this)" style="color:var(--warning)"><span class="bs-option-dot" style="background:var(--warning)"></span>Modification</div>
+          <div class="bs-option" onclick="setFlt('type','cessation',this)" style="color:var(--danger)"><span class="bs-option-dot" style="background:var(--danger)"></span>Cessation</div>
+        </div>
+      </div>
+      <div class="bs" id="flt_statut">
+        <button class="bs-trigger" id="flt_statut_t" style="background:#f3f4f6;color:var(--gray)" onclick="toggleFlt('flt_statut')">Statut dossier<span class="bs-arrow">▼</span></button>
+        <div class="bs-menu" id="flt_statut_m">
+          <div class="bs-option current" onclick="setFlt('statut',null,this)">Tous les statuts</div>
+          <div class="bs-option" onclick="setFlt('statut','en_cours',this)" style="color:var(--info)"><span class="bs-option-dot" style="background:var(--info)"></span>En cours</div>
+          <div class="bs-option" onclick="setFlt('statut','termine',this)" style="color:var(--success)"><span class="bs-option-dot" style="background:var(--success)"></span>Terminé</div>
+          <div class="bs-option" onclick="setFlt('statut','suspendu',this)" style="color:var(--gray)"><span class="bs-option-dot" style="background:var(--gray)"></span>Suspendu</div>
+        </div>
+      </div>
+      <div class="bs" id="flt_docs">
+        <button class="bs-trigger" id="flt_docs_t" style="background:#f3f4f6;color:var(--gray)" onclick="toggleFlt('flt_docs')">Documents<span class="bs-arrow">▼</span></button>
+        <div class="bs-menu" id="flt_docs_m">
+          <div class="bs-option current" onclick="setFlt('docs',null,this)">Tous</div>
+          <div class="bs-option" onclick="setFlt('docs','a_rediger',this)" style="color:var(--gray)"><span class="bs-option-dot" style="background:var(--gray)"></span>À rédiger</div>
+          <div class="bs-option" onclick="setFlt('docs','redige',this)" style="color:var(--info)"><span class="bs-option-dot" style="background:var(--info)"></span>Rédigés</div>
+          <div class="bs-option" onclick="setFlt('docs','envoye',this)" style="color:var(--warning)"><span class="bs-option-dot" style="background:var(--warning)"></span>Envoyés</div>
+          <div class="bs-option" onclick="setFlt('docs','signe',this)" style="color:var(--success)"><span class="bs-option-dot" style="background:var(--success)"></span>Signés</div>
+        </div>
+      </div>
+      <div class="bs" id="flt_inpi">
+        <button class="bs-trigger" id="flt_inpi_t" style="background:#f3f4f6;color:var(--gray)" onclick="toggleFlt('flt_inpi')">INPI<span class="bs-arrow">▼</span></button>
+        <div class="bs-menu" id="flt_inpi_m">
+          <div class="bs-option current" onclick="setFlt('inpi',null,this)">Tous</div>
+          <div class="bs-option" onclick="setFlt('inpi','en_attente',this)" style="color:var(--warning)"><span class="bs-option-dot" style="background:var(--warning)"></span>En attente</div>
+          <div class="bs-option" onclick="setFlt('inpi','valide',this)" style="color:var(--success)"><span class="bs-option-dot" style="background:var(--success)"></span>Validé</div>
+          <div class="bs-option" onclick="setFlt('inpi','rejete',this)" style="color:var(--danger)"><span class="bs-option-dot" style="background:var(--danger)"></span>Rejeté</div>
+        </div>
+      </div>
+      <input type="text" id="searchInput" class="form-control" style="width:200px;padding:5px 12px;font-size:12px;margin-left:4px" placeholder="Rechercher..." oninput="renderTable()">
+    </div>
+    <div class="card"><div class="table-wrap"><table>
+      <thead><tr><th>Entreprise</th><th>Type</th><th>Statut dossier</th><th>Documents</th><th>INPI</th><th>Derniere activite</th><th>Cree le</th><th></th></tr></thead>
+      <tbody id="dossiersBody"><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)">Chargement...</td></tr></tbody>
+    </table></div></div>
+  </div>
+</div>
+</div>
+
+<div class="modal-overlay hidden" id="modalNew">
+  <div class="modal">
+    <div class="modal-header"><h3>Nouveau dossier</h3><button class="modal-close" onclick="closeModal('modalNew')">x</button></div>
+    <div class="modal-body">
+      <div id="modalAlert" class="alert alert-error hidden"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nom de l entreprise *</label><input type="text" id="f_nom" class="form-control" placeholder="SARL Exemple"></div>
+        <div class="form-group"><label class="form-label">Type de formalite *</label>
+          <select id="f_type" class="form-control"><option value="creation">Creation</option><option value="modification">Modification</option><option value="cessation">Cessation</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Email du client *</label><input type="email" id="f_email" class="form-control" placeholder="client@entreprise.fr"></div>
+      <div class="form-group"><label class="form-label">Telephone</label><input type="tel" id="f_tel" class="form-control" placeholder="06 00 00 00 00"></div>
+      <div class="form-group"><label class="form-label">Notes internes</label><textarea id="f_notes" class="form-control" rows="3" placeholder="Observations..."></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNew')">Annuler</button>
+      <button class="btn btn-primary" onclick="createDossier()">Creer le dossier</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let allDossiers=[], currentUser=null;
+const filters = { type: null, statut: null, docs: null, inpi: null };
+let _openFlt = null;
+
+async function init(){
+  const me=await fetch('/api/auth/me').then(r=>r.json());
+  if(me.error){window.location.href='/';return;}
+  currentUser=me;
+  document.getElementById('userName').textContent=me.prenom+' '+me.nom;
+  document.getElementById('userRole').textContent=me.role==='admin'?'Administrateur':'Collaborateur';
+  if(me.role==='admin'){document.getElementById('adminLink').classList.remove('hidden');loadUsers();}
+  loadDossiers();
+}
+
+async function loadUsers(){
+  const users=await fetch('/api/admin/users').then(r=>r.json()).catch(()=>[]);
+  const sel=document.getElementById('f_assigned');
+  users.filter(u=>u.actif).forEach(u=>{const o=document.createElement('option');o.value=u.id;o.textContent=u.prenom+' '+u.nom;sel.appendChild(o);});
+}
+
+async function loadDossiers(){
+  allDossiers=await fetch('/api/dossiers').then(r=>r.json());
+  document.getElementById('statTotal').textContent=allDossiers.length;
+  document.getElementById('statEnCours').textContent=allDossiers.filter(d=>d.statut_global==='en_cours').length;
+  document.getElementById('statTermines').textContent=allDossiers.filter(d=>d.statut_global==='termine').length;
+  document.getElementById('statCreation').textContent=allDossiers.filter(d=>d.type==='creation').length;
+  renderTable();
+}
+
+function closeAllFlt() {
+  ['flt_type','flt_statut','flt_docs','flt_inpi'].forEach(id => {
+    const m = document.getElementById(id+'_m');
+    if (m) m.classList.remove('open');
+  });
+  _openFlt = null;
+}
+
+function toggleFlt(uid) {
+  const m = document.getElementById(uid+'_m');
+  const t = document.getElementById(uid+'_t');
+  if (!m||!t) return;
+  const isOpen = m.classList.contains('open');
+  closeAllFlt();
+  if (!isOpen) {
+    const rect = t.getBoundingClientRect();
+    m.style.left=rect.left+'px'; m.style.top=(rect.bottom+4)+'px';
+    m.classList.add('open');
+    _openFlt = uid;
+  }
+}
+
+function setFlt(key, value, el) {
+  filters[key] = value;
+  // Mettre à jour le trigger
+  const fltId = 'flt_'+key;
+  const t = document.getElementById(fltId+'_t');
+  const LABELS = {
+    type: {null:'Type', creation:'Création', modification:'Modification', cessation:'Cessation'},
+    statut: {null:'Statut dossier', en_cours:'En cours', termine:'Terminé', suspendu:'Suspendu'},
+    docs: {null:'Documents', a_rediger:'À rédiger', redige:'Rédigés', envoye:'Envoyés', signe:'Signés'},
+    inpi: {null:'INPI', en_attente:'En attente', valide:'Validé', rejete:'Rejeté'},
+  };
+  const COLORS = {
+    creation:'#6d28d9', modification:'var(--warning)', cessation:'var(--danger)',
+    en_cours:'var(--info)', termine:'var(--success)', suspendu:'var(--gray)',
+    a_rediger:'var(--gray)', redige:'var(--info)', envoye:'var(--warning)', signe:'var(--success)',
+    en_attente:'var(--warning)', valide:'var(--success)', rejete:'var(--danger)',
+  };
+  if (t) {
+    const lbl = LABELS[key][value] || LABELS[key]['null'];
+    const col = value ? COLORS[value] : 'var(--gray)';
+    const bg = value ? col.replace('var(--','var(--').replace(')','-bg)').replace('var(--gray-bg)','#f3f4f6') : '#f3f4f6';
+    t.style.color = col;
+    t.style.background = value ? getBadgeBg(value) : '#f3f4f6';
+    t.innerHTML = (value ? '<span style="width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.7;flex-shrink:0;display:inline-block;margin-right:5px"></span>' : '') + lbl + '<span class="bs-arrow">▼</span>';
+  }
+  // Marquer l'option active
+  document.querySelectorAll('#flt_'+key+'_m .bs-option').forEach(o=>o.classList.remove('current'));
+  if (el) el.classList.add('current');
+  // Fermer le menu
+  const m = document.getElementById(fltId+'_m');
+  if (m) m.classList.remove('open');
+  _openFlt = null;
+  renderTable();
+}
+
+function getBadgeBg(v) {
+  const map = {
+    creation:'#ede9fe', modification:'var(--warning-bg)', cessation:'var(--danger-bg)',
+    en_cours:'var(--info-bg)', termine:'var(--success-bg)', suspendu:'#f3f4f6',
+    a_rediger:'#f3f4f6', redige:'var(--info-bg)', envoye:'var(--warning-bg)', signe:'var(--success-bg)',
+    en_attente:'var(--warning-bg)', valide:'var(--success-bg)', rejete:'var(--danger-bg)',
+  };
+  return map[v]||'#f3f4f6';
+}
+
+document.addEventListener('click', e => {
+  if (_openFlt && !e.target.closest('.bs')) {
+    const pm = document.getElementById(_openFlt+'_m');
+    if (pm) pm.classList.remove('open');
+    _openFlt = null;
+  }
+});
+
+const LBL_TYPE = {creation:'Création',modification:'Modification',cessation:'Cessation'};
+const LBL_STATUT = {en_cours:'En cours',termine:'Terminé',suspendu:'Suspendu'};
+const LBL_DOCS = {a_rediger:'À rédiger',redige:'Rédigés',envoye:'Envoyés',signe:'Signés'};
+const LBL_INPI = {en_attente:'En attente',valide:'Validé',rejete:'Rejeté'};
+
+// Couleurs correspondant aux classes .badge-* (bg, color)
+const BADGE_COLORS = {
+  en_cours:     ['var(--info-bg)',     'var(--info)'],
+  termine:      ['var(--success-bg)',  'var(--success)'],
+  suspendu:     ['#f3f4f6',            'var(--gray)'],
+  a_rediger:    ['#f3f4f6',            'var(--gray)'],
+  redige:       ['var(--info-bg)',     'var(--info)'],
+  envoye:       ['var(--warning-bg)',  'var(--warning)'],
+  signe:        ['var(--success-bg)',  'var(--success)'],
+  en_attente:   ['var(--warning-bg)',  'var(--warning)'],
+  valide:       ['var(--success-bg)',  'var(--success)'],
+  rejete:       ['var(--danger-bg)',   'var(--danger)'],
+};
+
+let _openBs = null;
+
+function badgeSelect(dossierId, field, value, options, lbl, onSave) {
+  const uid = 'bs_'+dossierId+'_'+field;
+  const [bg, col] = BADGE_COLORS[value] || ['#f3f4f6','var(--gray)'];
+  const trigger =
+    '<button class="bs-trigger" id="'+uid+'_t" style="background:'+bg+';color:'+col+'" '+
+    'onclick="toggleBs(\''+uid+'\')">' +
+    lbl[value] +
+    '<span class="bs-arrow">▼</span></button>';
+  const opts = options.map(v => {
+    const [vbg, vcol] = BADGE_COLORS[v] || ['#f3f4f6','var(--gray)'];
+    return '<div class="bs-option'+(v===value?' current':'')+'" '+
+      'onclick="selectBs(\''+uid+'\',\''+dossierId+'\',\''+field+'\',\''+v+'\')" '+
+      'style="color:'+vcol+'">'+
+      '<span class="bs-option-dot" style="background:'+vcol+'"></span>'+lbl[v]+
+      '</div>';
+  }).join('');
+  return '<div class="bs" id="'+uid+'">'+trigger+
+    '<div class="bs-menu" id="'+uid+'_m">'+opts+'</div></div>';
+}
+
+function toggleBs(uid) {
+  const menu = document.getElementById(uid+'_m');
+  const trigger = document.getElementById(uid+'_t');
+  if (!menu || !trigger) return;
+  const isOpen = menu.classList.contains('open');
+  if (_openBs && _openBs !== uid) {
+    const prev = document.getElementById(_openBs+'_m');
+    if (prev) prev.classList.remove('open');
+  }
+  if (!isOpen) {
+    const rect = trigger.getBoundingClientRect();
+    menu.style.left = rect.left + 'px';
+    // Ouvrir au-dessus : on positionne provisoirement en bas pour mesurer la hauteur
+    menu.style.top = '-9999px';
+    menu.style.display = 'block';
+    const mh = menu.offsetHeight;
+    menu.style.top = (rect.top - mh - 4) + 'px';
+  }
+  menu.classList.toggle('open', !isOpen);
+  _openBs = isOpen ? null : uid;
+}
+
+async function selectBs(uid, dossierId, field, value) {
+  // Fermer le menu
+  const menu = document.getElementById(uid+'_m');
+  if (menu) menu.classList.remove('open');
+  _openBs = null;
+  // Appel API
+  let ok;
+  if (field === 'inpi_statut') {
+    const res = await fetch('/api/dossiers/'+dossierId+'/inpi',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut:value})});
+    ok = res.ok;
+  } else {
+    const body = {}; body[field] = value;
+    const res = await fetch('/api/dossiers/'+dossierId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    ok = res.ok;
+  }
+  if (!ok) { alert('Erreur lors de la mise à jour'); return; }
+  // Mettre à jour localement et re-render
+  const d = allDossiers.find(x=>x.id==dossierId);
+  if (d) d[field] = value;
+  renderTable();
+}
+
+document.addEventListener('click', e => {
+  const inBs = e.target.closest('.bs');
+  if (_openBs && (!inBs || !document.getElementById(_openBs)?.contains(e.target))) {
+    const prev = document.getElementById(_openBs+'_m');
+    if (prev) prev.classList.remove('open');
+    _openBs = null;
+  }
+  if (_openFlt && (!inBs || !document.getElementById(_openFlt)?.contains(e.target))) {
+    const pm = document.getElementById(_openFlt+'_m');
+    if (pm) pm.classList.remove('open');
+    _openFlt = null;
+  }
+});
+
+function renderTable(){
+  const search=document.getElementById('searchInput').value.toLowerCase();
+  let list=allDossiers;
+  if(filters.type)   list=list.filter(d=>d.type===filters.type);
+  if(filters.statut) list=list.filter(d=>d.statut_global===filters.statut);
+  if(filters.docs)   list=list.filter(d=>d.statut_docs===filters.docs);
+  if(filters.inpi)   list=list.filter(d=>d.inpi_statut===filters.inpi);
+  if(search) list=list.filter(d=>d.nom_entreprise.toLowerCase().includes(search)||d.client_email?.toLowerCase().includes(search));
+  const tbody=document.getElementById('dossiersBody');
+  if(!list.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)">Aucun dossier</td></tr>';return;}
+  tbody.innerHTML=list.map(d=>{
+    const sg = d.statut_global||'en_cours';
+    const sd = d.statut_docs||'a_rediger';
+    const inpiVal = d.inpi_statut||null;
+    const bsStatut = badgeSelect(d.id,'statut_global',sg,['en_cours','termine','suspendu'],LBL_STATUT);
+    const bsDocs   = badgeSelect(d.id,'statut_docs',sd,['a_rediger','redige','envoye','signe'],LBL_DOCS);
+    const bsInpi   = inpiVal
+      ? badgeSelect(d.id,'inpi_statut',inpiVal,['en_attente','valide','rejete'],LBL_INPI)
+      : '<span class="text-muted" style="font-size:12px">—</span>';
+    return '<tr class="tr-link" onclick="window.location.href=\'/dossier.html?id='+d.id+'\'">'+
+      '<td><div class="font-bold">'+d.nom_entreprise+'</div><div class="text-muted" style="font-size:12px">'+d.client_email+'</div></td>'+
+      '<td><span class="badge badge-'+d.type+'">'+LBL_TYPE[d.type]+'</span></td>'+
+      '<td onclick="event.stopPropagation()">'+bsStatut+'</td>'+
+      '<td onclick="event.stopPropagation()">'+bsDocs+'</td>'+
+      '<td onclick="event.stopPropagation()">'+bsInpi+'</td>'+
+      '<td>'+(d.last_action ? '<div style="font-size:12px;font-weight:500">'+fmtAction(d.last_action)+'</div><div style="font-size:11px;color:var(--text-light)">'+(d.last_action_by||'Système')+' · '+fmt(d.last_action_at)+'</div>' : '<span class="text-muted" style="font-size:12px">—</span>')+'</td>'+
+      '<td style="font-size:12px">'+fmt(d.created_at)+'</td>'+
+      '<td onclick="event.stopPropagation()"><button class="btn btn-sm btn-secondary" onclick="window.location.href=\'/dossier.html?id='+d.id+'\'">Ouvrir</button></td>'+
+      '</tr>';
+  }).join('');
+}
+
+async function createDossier(){
+  const al=document.getElementById('modalAlert'); al.classList.add('hidden');
+  const body={nom_entreprise:document.getElementById('f_nom').value.trim(),email_client:document.getElementById('f_email').value.trim(),telephone:document.getElementById('f_tel').value.trim(),type:document.getElementById('f_type').value,notes:document.getElementById('f_notes').value.trim()};
+  if(!body.nom_entreprise||!body.email_client){al.textContent='Nom et email sont requis.';al.classList.remove('hidden');return;}
+  const res=await fetch('/api/dossiers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data=await res.json();
+  if(!res.ok){al.textContent=data.error;al.classList.remove('hidden');return;}
+  window.location.href='/dossier.html?id='+data.id;
+}
+
+function openNewDossier(){document.getElementById('modalNew').classList.remove('hidden');}
+function closeModal(id){document.getElementById(id).classList.add('hidden');}
+async function logout(){await fetch('/api/auth/logout',{method:'POST'});window.location.href='/';}
+function fmt(d){return d?new Date(d).toLocaleDateString('fr-FR'):'-';}
+const ACTION_LBL={'CREATION_DOSSIER':'Création','MAJ_DOSSIER':'Mise à jour','MAJ_DOCUMENT':'Document','MAJ_INPI':'INPI','AJOUT_DOCUMENT':'Nouveau doc','ENVOI_SUIVI':'Suivi envoyé'};
+function fmtAction(a){return ACTION_LBL[a]||a.replace(/_/g,' ');}
+init();
+</script></body></html>

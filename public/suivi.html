@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suivi de dossier</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.suivi-steps{display:flex;flex-direction:column;gap:0;margin:24px 0}
+.suivi-step{display:flex;gap:20px;position:relative}
+.suivi-step:not(:last-child)::before{content:'';position:absolute;left:23px;top:52px;width:2px;bottom:-8px;background:var(--border);z-index:0}
+.suivi-step.done::before{background:var(--success)}
+.suivi-step.active::before{background:linear-gradient(var(--success),var(--border))}
+.step-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;z-index:1;border:3px solid var(--border);background:white;margin-bottom:16px}
+.suivi-step.done .step-icon{background:var(--success);border-color:var(--success);color:white}
+.suivi-step.active .step-icon{background:var(--primary);border-color:var(--primary);color:white;box-shadow:0 0 0 4px rgba(30,58,95,.15)}
+.suivi-step.pending .step-icon{background:white;border-color:var(--border);color:var(--text-light)}
+.suivi-step.rejected .step-icon{background:var(--danger);border-color:var(--danger);color:white}
+.step-body{flex:1;padding-bottom:24px}
+.step-num{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-light);margin-bottom:2px}
+.step-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px}
+.suivi-step.pending .step-title{color:var(--text-light);font-weight:500}
+.step-desc{font-size:13px;color:var(--text-light)}
+.step-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;margin-top:6px}
+.badge-done{background:var(--success-bg);color:var(--success)}
+.badge-active{background:var(--info-bg);color:var(--info)}
+.badge-pending{background:#f3f4f6;color:var(--gray)}
+.badge-rejected{background:var(--danger-bg);color:var(--danger)}
+.rejection-box{margin-top:10px;padding:12px 14px;background:var(--danger-bg);border-radius:8px;border-left:3px solid var(--danger);font-size:13px;color:var(--danger)}
+.correction-note{margin-top:10px;padding:12px 14px;background:var(--warning-bg);border-radius:8px;border-left:3px solid var(--warning);font-size:13px;color:var(--warning)}
+</style>
+</head>
+<body>
+<div class="suivi-page">
+  <div class="suivi-header">
+    <h1>Suivi de votre dossier</h1>
+    <p id="entrepriseName"></p>
+  </div>
+
+  <div class="suivi-content">
+    <div id="errorBox" class="alert alert-error hidden">Dossier introuvable. Vérifiez votre lien.</div>
+    <div id="loadingBox" style="text-align:center;padding:60px;color:var(--text-light)">Chargement de votre dossier…</div>
+
+    <div id="mainContent" class="hidden">
+      <!-- Infos rapides -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-body" style="display:flex;gap:24px;flex-wrap:wrap;align-items:center">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light)">Entreprise</div>
+            <div style="font-weight:700;font-size:18px;margin-top:2px" id="s_nom"></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light)">Type</div>
+            <span id="s_type" class="badge" style="margin-top:4px"></span>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light)">Ouvert le</div>
+            <div id="s_created" style="font-weight:500;margin-top:4px;font-size:14px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Étapes -->
+      <div class="card" style="margin-bottom:24px">
+        <div class="card-header"><h3>Avancement de votre dossier</h3></div>
+        <div class="card-body">
+          <div class="suivi-steps" id="stepsList"></div>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding:20px;color:var(--text-light);font-size:13px">
+        Pour toute question, contactez directement votre cabinet.<br>
+        <strong>Cette page se met à jour automatiquement.</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = new URLSearchParams(location.search).get('t');
+
+const LABELS_TYPE = { creation:'Création', modification:'Modification', cessation:'Cessation' };
+const LBL_DOCS = { a_rediger:'À rédiger', redige:'Rédigés', envoye:'Envoyés pour signature', signe:'Signés' };
+const LBL_INPI = { en_attente:'En attente', valide:'Validé ✓', rejete:'Rejeté' };
+
+async function load() {
+  if (!token) { showError(); return; }
+  try {
+    const res = await fetch('/api/suivi/' + token);
+    if (!res.ok) { showError(); return; }
+    const data = await res.json();
+    render(data.dossier, data.docs, data.inpi);
+  } catch { showError(); }
+}
+
+function showError() {
+  document.getElementById('loadingBox').classList.add('hidden');
+  document.getElementById('errorBox').classList.remove('hidden');
+}
+
+function formatDate(d) {
+  return d ? new Date(d).toLocaleDateString('fr-FR', {day:'2-digit',month:'long',year:'numeric'}) : '–';
+}
+
+function render(dossier, docs, inpi) {
+  document.getElementById('loadingBox').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  document.title = 'Suivi – ' + dossier.nom_entreprise;
+  document.getElementById('entrepriseName').textContent = dossier.nom_entreprise;
+  document.getElementById('s_nom').textContent = dossier.nom_entreprise;
+  const typeEl = document.getElementById('s_type');
+  typeEl.className = 'badge badge-' + dossier.type;
+  typeEl.textContent = LABELS_TYPE[dossier.type] || dossier.type;
+  document.getElementById('s_created').textContent = formatDate(dossier.created_at);
+
+  // Déterminer l'étape courante
+  const statut_docs = dossier.statut_docs || 'a_rediger';
+  const inpiStatut = inpi ? inpi.statut : null;
+  const isCessation = dossier.type === 'cessation';
+  // Rejeté est interne uniquement — le client voit "En attente"
+  const isRejected = false;
+  const isValidated = inpiStatut === 'valide';
+
+  // Calcul de l'étape active (1 à 4)
+  let activeStep;
+  if (isValidated) {
+    activeStep = 5; // tout terminé
+  } else if (isRejected) {
+    activeStep = 'rejected';
+  } else if (inpiStatut === 'en_attente' && ['signe'].includes(statut_docs)) {
+    activeStep = 3;
+  } else if (['envoye', 'signe'].includes(statut_docs)) {
+    activeStep = 2;
+  } else {
+    activeStep = 1;
+  }
+
+  const steps = [];
+
+  // Étape 1 : Ouverture du dossier (titre selon type)
+  const TYPE_TITLES = { creation:'Création du dossier', modification:'Modification du dossier', cessation:'Cessation du dossier' };
+  const s1 = activeStep === 1 ? 'active' : 'done';
+  steps.push({
+    num: 1, state: s1,
+    icon: s1 === 'done' ? '✓' : '📁',
+    title: TYPE_TITLES[dossier.type] || 'Ouverture du dossier',
+    desc: s1 === 'done' ? 'Dossier ouvert le ' + formatDate(dossier.created_at) : 'Votre dossier a été ouvert. Nous rassemblons les documents.',
+    badge: s1 === 'done' ? {cls:'badge-done',txt:'Complété'} : {cls:'badge-active',txt:'En cours'},
+  });
+
+  // Étape 2 : Documents à signer via DocuSign
+  let s2state, s2icon, s2desc, s2badge;
+  if (activeStep === 1) {
+    s2state = 'pending'; s2icon = '✍️';
+    s2desc = 'Nous préparerons vos documents et vous les enverrons pour signature.';
+    s2badge = {cls:'badge-pending', txt:'En attente'};
+  } else if (activeStep === 2) {
+    s2state = 'active'; s2icon = '✍️';
+    s2desc = 'Vos documents ont été envoyés via DocuSign. Merci de les signer dès que possible.';
+    s2badge = {cls:'badge-active', txt:'Signature requise'};
+  } else {
+    s2state = 'done'; s2icon = '✓';
+    s2desc = 'Documents signés avec succès.';
+    s2badge = {cls:'badge-done', txt:'Signé'};
+  }
+  if (activeStep === 'rejected') {
+    s2state = 'active'; s2icon = '✍️';
+    s2desc = 'Suite au rejet, votre dossier a été corrigé et de nouveaux documents vous seront envoyés pour signature.';
+    s2badge = {cls:'badge-active', txt:'Correction en cours'};
+  }
+  steps.push({num:2, state:s2state, icon:s2icon, title:'Documents à signer via DocuSign', desc:s2desc, badge:s2badge});
+
+  // Étape 3 : Documents signés — En attente INPI
+  let s3state, s3icon, s3desc, s3badge;
+  if (['pending','active'].includes(s2state) && activeStep !== 'rejected') {
+    s3state = 'pending'; s3icon = '🏛';
+    s3desc = isCessation ? 'En attente de la signature de vos documents.' : 'Dépôt du dossier à l\'INPI après signature de vos documents.';
+    s3badge = {cls:'badge-pending', txt:'En attente'};
+  } else if (activeStep === 3 || activeStep === 'rejected') {
+    s3state = activeStep === 'rejected' ? 'done' : 'active';
+    s3icon = activeStep === 'rejected' ? '✓' : '🏛';
+    s3desc = isCessation ? 'Dossier en cours de traitement.' : 'Votre dossier a été déposé à l\'INPI et est en cours d\'instruction.';
+    s3badge = activeStep === 'rejected' ? {cls:'badge-done',txt:'Transmis'} : {cls:'badge-active', txt:'Instruction en cours'};
+  } else {
+    s3state = 'done'; s3icon = '✓';
+    s3desc = 'Dossier transmis et instruit par l\'INPI.';
+    s3badge = {cls:'badge-done', txt:'Transmis'};
+  }
+  if (!isCessation) {
+    steps.push({num:3, state:s3state, icon:s3icon, title:'Dossier en attente INPI / RNE', desc:s3desc, badge:s3badge, inpiNum: inpi?.numero_dossier});
+  }
+
+  // Étape 4 : Résultat INPI
+  if (!isCessation) {
+    let s4state, s4icon, s4title, s4desc, s4badge, extra = '';
+    if (isValidated) {
+      s4state = 'done'; s4icon = '🎉';
+      s4title = 'Dossier validé par l\'INPI';
+      s4desc = 'Félicitations ! Votre formalité a été acceptée par l\'INPI / RNE.';
+      s4badge = {cls:'badge-done', txt:'Validé ✓'};
+      if (inpi?.numero_dossier) s4desc += ' N° dossier : ' + inpi.numero_dossier + '.';
+    } else if (isRejected) {
+      s4state = 'rejected'; s4icon = '⚠';
+      s4title = 'Dossier rejeté — correction en cours';
+      s4desc = 'Votre dossier a été rejeté par l\'INPI. Notre équipe corrige le dossier et le représentera.';
+      s4badge = {cls:'badge-rejected', txt:'Rejeté'};
+      if (inpi?.commentaire) extra = `<div class="rejection-box"><strong>Motif :</strong> ${inpi.commentaire}</div><div class="correction-note">⚙️ Notre équipe traite la correction. Vous serez recontacté pour re-signer les documents si nécessaire.</div>`;
+    } else {
+      s4state = 'pending'; s4icon = '🏁';
+      s4title = 'Décision INPI';
+      s4desc = 'Une fois votre dossier instruit, l\'INPI rendra sa décision.';
+      s4badge = {cls:'badge-pending', txt:'En attente'};
+    }
+    steps.push({num:4, state:s4state, icon:s4icon, title:s4title, desc:s4desc, badge:s4badge, extra});
+  }
+
+  document.getElementById('stepsList').innerHTML = steps.map(s => `
+    <div class="suivi-step ${s.state}">
+      <div class="step-icon">${s.icon}</div>
+      <div class="step-body">
+        <div class="step-num">Étape ${s.num}</div>
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc">${s.desc}${s.inpiNum ? ' <strong>N° ' + s.inpiNum + '</strong>' : ''}</div>
+        <span class="step-badge ${s.badge.cls}">${s.badge.txt}</span>
+        ${s.extra || ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+load();
+setInterval(load, 120000);
+</script>
+</body>
+</html>

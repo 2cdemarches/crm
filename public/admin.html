@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paramètres – CRM Formalités</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo"><h2>CRM Formalités</h2><p>Cabinet d'expertise comptable</p></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html"><span class="icon">📋</span> Tableau de bord</a>
+      <a href="/dashboard.html"><span class="icon">📁</span> Dossiers</a>
+      <a href="/admin.html" class="active"><span class="icon">⚙️</span> Paramètres</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-name" id="userName"></div>
+      <div class="user-role">Administrateur</div>
+      <button onclick="logout()">Se déconnecter</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar"><h1>Paramètres</h1></div>
+    <div class="content">
+
+      <!-- Tabs -->
+      <div class="flex gap-8" style="margin-bottom:20px">
+        <button class="btn btn-primary" onclick="showTab('users',this)" id="tab-users">👥 Collaborateurs</button>
+        <button class="btn btn-secondary" onclick="showTab('email',this)" id="tab-email">📧 Configuration email</button>
+        <button class="btn btn-secondary" onclick="showTab('logs',this)" id="tab-logs">📋 Journal d'activité</button>
+      </div>
+
+      <!-- Tab Collaborateurs -->
+      <div id="pane-users">
+        <div class="card">
+          <div class="card-header">
+            <h3>Collaborateurs du cabinet</h3>
+            <button class="btn btn-primary btn-sm" onclick="openNewUser()">+ Ajouter</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Créé le</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="usersBody">
+                <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light)">Chargement…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Email -->
+      <div id="pane-email" class="hidden">
+        <div class="card">
+          <div class="card-header"><h3>Serveur email sortant (SMTP)</h3></div>
+          <div class="card-body">
+            <div id="emailAlert" class="alert hidden"></div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Hôte SMTP</label>
+                <input type="text" id="em_host" class="form-control" placeholder="smtp.gmail.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Port</label>
+                <input type="number" id="em_port" class="form-control" placeholder="587">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email / Identifiant</label>
+                <input type="text" id="em_user" class="form-control" placeholder="cabinet@gmail.com">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mot de passe / Clé app</label>
+                <input type="password" id="em_pass" class="form-control" placeholder="••••••••••••">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Nom expéditeur</label>
+                <input type="text" id="em_from_name" class="form-control" placeholder="Cabinet Expertise Comptable">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email expéditeur</label>
+                <input type="email" id="em_from_email" class="form-control" placeholder="contact@cabinet.fr">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">
+                <input type="checkbox" id="em_secure" style="margin-right:6px">
+                Connexion sécurisée SSL/TLS (port 465)
+              </label>
+            </div>
+            <div class="flex gap-8 mt-16">
+              <button class="btn btn-primary" onclick="saveEmail()">💾 Enregistrer</button>
+              <div class="flex gap-8 items-center" style="flex:1">
+                <input type="email" id="em_test_to" class="form-control" style="max-width:260px" placeholder="Envoyer test à…">
+                <button class="btn btn-secondary" onclick="testEmail()">📧 Tester</button>
+              </div>
+            </div>
+            <div class="mt-16" style="background:var(--bg);padding:14px;border-radius:6px;font-size:12px;color:var(--text-light)">
+              <strong>Exemples de configuration :</strong><br>
+              Gmail : smtp.gmail.com · port 587 · utilisez un mot de passe d'application Google<br>
+              Outlook/Office365 : smtp.office365.com · port 587<br>
+              OVH : ssl0.ovh.net · port 465 · SSL activé
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Logs -->
+      <div id="pane-logs" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h3>Journal d'activité</h3>
+            <button class="btn btn-secondary btn-sm" onclick="loadLogs()">🔄 Actualiser</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Date / Heure</th><th>Collaborateur</th><th>Entreprise</th><th>Action</th><th>Détails</th></tr>
+              </thead>
+              <tbody id="logsBody">
+                <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-light)">Cliquez sur Actualiser</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal utilisateur -->
+<div class="modal-overlay hidden" id="modalUser">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalUserTitle">Nouveau collaborateur</h3>
+      <button class="modal-close" onclick="closeModal('modalUser')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="userAlert" class="alert alert-error hidden"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prénom *</label><input type="text" id="u_prenom" class="form-control"></div>
+        <div class="form-group"><label class="form-label">Nom *</label><input type="text" id="u_nom" class="form-control"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email *</label><input type="email" id="u_email" class="form-control"></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mot de passe *</label>
+          <input type="password" id="u_pass" class="form-control" placeholder="Laissez vide pour ne pas changer">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rôle</label>
+          <select id="u_role" class="form-control">
+            <option value="collaborateur">Collaborateur</option>
+            <option value="admin">Administrateur</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group" id="u_actif_group">
+        <label class="form-label"><input type="checkbox" id="u_actif" style="margin-right:6px" checked> Compte actif</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalUser')">Annuler</button>
+      <button class="btn btn-primary" id="saveUserBtn" onclick="saveUser()">Créer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let editUserId = null;
+
+async function init() {
+  const me = await fetch('/api/auth/me').then(r => r.json());
+  if (me.error || me.role !== 'admin') { window.location.href = '/dashboard.html'; return; }
+  document.getElementById('userName').textContent = me.prenom + ' ' + me.nom;
+  loadUsers();
+  loadEmailConfig();
+}
+
+function showTab(tab, btn) {
+  ['users','email','logs'].forEach(t => {
+    document.getElementById('pane-'+t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-'+t).className = t === tab ? 'btn btn-primary' : 'btn btn-secondary';
+  });
+  if (tab === 'logs') loadLogs();
+}
+
+async function loadUsers() {
+  const users = await fetch('/api/admin/users').then(r => r.json());
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light)">Aucun utilisateur</td></tr>'; return; }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.prenom} ${u.nom}</strong></td>
+      <td>${u.email}</td>
+      <td><span class="badge ${u.role==='admin'?'badge-creation':'badge-en_cours'}">${u.role==='admin'?'Admin':'Collaborateur'}</span></td>
+      <td><span class="badge ${u.actif?'badge-valide':'badge-rejete'}">${u.actif?'Actif':'Inactif'}</span></td>
+      <td style="font-size:12px">${formatDate(u.created_at)}</td>
+      <td>
+        <button class="btn btn-sm btn-secondary" onclick="openEditUser(${JSON.stringify(u).replace(/"/g,'&quot;')})">Modifier</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser(${u.id},'${u.prenom} ${u.nom}')">Supprimer</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openNewUser() {
+  editUserId = null;
+  document.getElementById('modalUserTitle').textContent = 'Nouveau collaborateur';
+  document.getElementById('saveUserBtn').textContent = 'Créer';
+  document.getElementById('u_prenom').value = '';
+  document.getElementById('u_nom').value = '';
+  document.getElementById('u_email').value = '';
+  document.getElementById('u_pass').value = '';
+  document.getElementById('u_role').value = 'collaborateur';
+  document.getElementById('u_actif').checked = true;
+  document.getElementById('u_actif_group').classList.add('hidden');
+  document.getElementById('userAlert').classList.add('hidden');
+  document.getElementById('modalUser').classList.remove('hidden');
+}
+
+function openEditUser(u) {
+  editUserId = u.id;
+  document.getElementById('modalUserTitle').textContent = 'Modifier le collaborateur';
+  document.getElementById('saveUserBtn').textContent = 'Enregistrer';
+  document.getElementById('u_prenom').value = u.prenom;
+  document.getElementById('u_nom').value = u.nom;
+  document.getElementById('u_email').value = u.email;
+  document.getElementById('u_pass').value = '';
+  document.getElementById('u_role').value = u.role;
+  document.getElementById('u_actif').checked = u.actif === 1;
+  document.getElementById('u_actif_group').classList.remove('hidden');
+  document.getElementById('userAlert').classList.add('hidden');
+  document.getElementById('modalUser').classList.remove('hidden');
+}
+
+async function saveUser() {
+  const alert = document.getElementById('userAlert');
+  alert.classList.add('hidden');
+  const body = {
+    prenom: document.getElementById('u_prenom').value.trim(),
+    nom: document.getElementById('u_nom').value.trim(),
+    email: document.getElementById('u_email').value.trim(),
+    password: document.getElementById('u_pass').value,
+    role: document.getElementById('u_role').value,
+    actif: document.getElementById('u_actif').checked ? 1 : 0
+  };
+  const url = editUserId ? `/api/admin/users/${editUserId}` : '/api/admin/users';
+  const method = editUserId ? 'PUT' : 'POST';
+  const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) { alert.textContent = data.error; alert.classList.remove('hidden'); return; }
+  closeModal('modalUser');
+  loadUsers();
+}
+
+async function deleteUser(id, nom) {
+  if (!confirm(`Supprimer le compte de ${nom} ?`)) return;
+  const res = await fetch('/api/admin/users/'+id, { method:'DELETE' });
+  const data = await res.json();
+  if (!res.ok) { alert(data.error); return; }
+  loadUsers();
+}
+
+async function loadEmailConfig() {
+  const cfg = await fetch('/api/admin/email-config').then(r => r.json());
+  if (!cfg) return;
+  document.getElementById('em_host').value = cfg.host || '';
+  document.getElementById('em_port').value = cfg.port || 587;
+  document.getElementById('em_user').value = cfg.user || '';
+  document.getElementById('em_secure').checked = cfg.secure === 1;
+  document.getElementById('em_from_name').value = cfg.from_name || '';
+  document.getElementById('em_from_email').value = cfg.from_email || '';
+}
+
+async function saveEmail() {
+  const alert = document.getElementById('emailAlert');
+  const body = {
+    host: document.getElementById('em_host').value.trim(),
+    port: parseInt(document.getElementById('em_port').value) || 587,
+    secure: document.getElementById('em_secure').checked ? 1 : 0,
+    user: document.getElementById('em_user').value.trim(),
+    password: document.getElementById('em_pass').value,
+    from_name: document.getElementById('em_from_name').value.trim(),
+    from_email: document.getElementById('em_from_email').value.trim()
+  };
+  const res = await fetch('/api/admin/email-config', { method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+  const data = await res.json();
+  alert.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+  alert.textContent = res.ok ? 'Configuration enregistrée !' : data.error;
+  alert.classList.remove('hidden');
+  setTimeout(() => alert.classList.add('hidden'), 4000);
+}
+
+async function testEmail() {
+  const to = document.getElementById('em_test_to').value.trim();
+  if (!to) { alert('Saisissez une adresse email de destination'); return; }
+  const alert = document.getElementById('emailAlert');
+  try {
+    const res = await fetch('/api/admin/email-test', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ to }) });
+    const data = await res.json();
+    alert.className = res.ok ? 'alert alert-success' : 'alert alert-error';
+    alert.textContent = res.ok ? 'Email de test envoyé avec succès à ' + to : 'Erreur : ' + data.error;
+    alert.classList.remove('hidden');
+    setTimeout(() => alert.classList.add('hidden'), 6000);
+  } catch(e) { alert.className = 'alert alert-error'; alert.textContent = e.message; alert.classList.remove('hidden'); }
+}
+
+async function loadLogs() {
+  const logs = await fetch('/api/admin/logs').then(r => r.json());
+  const tbody = document.getElementById('logsBody');
+  if (!logs.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text-light)">Aucune activité</td></tr>'; return; }
+  tbody.innerHTML = logs.map(l => `
+    <tr>
+      <td style="font-size:12px;white-space:nowrap">${formatDateTime(l.created_at)}</td>
+      <td>${l.user_nom || '–'}</td>
+      <td>${l.nom_entreprise || '–'}</td>
+      <td><code style="font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${l.action}</code></td>
+      <td style="font-size:12px;color:var(--text-light)">${l.details || '–'}</td>
+    </tr>
+  `).join('');
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+async function logout() { await fetch('/api/auth/logout', {method:'POST'}); window.location.href='/'; }
+function formatDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '–'; }
+function formatDateTime(d) { if(!d) return '–'; const dt=new Date(d); return dt.toLocaleDateString('fr-FR')+' '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+
+init();
+</script>
+</body>
+</html>

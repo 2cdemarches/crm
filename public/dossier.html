@@ -1,0 +1,411 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dossier - CRM</title><link rel="stylesheet" href="/css/style.css">
+<style>
+.dossier-layout{display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start}
+.section{background:white;border-radius:10px;border:1px solid var(--border);margin-bottom:16px;overflow:hidden}
+.section-header{padding:13px 18px;border-bottom:1px solid var(--border);background:var(--bg)}
+.section-title{font-size:13px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.04em}
+.section-body{padding:18px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px}
+.info-item label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:3px}
+.tl-item{padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:7px;height:7px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:5px}
+.tl-action{font-size:12px;font-weight:600;color:var(--text)}
+.tl-detail{font-size:11px;color:var(--text-light);margin-top:1px}
+.link-box{background:var(--bg);border-radius:6px;padding:9px 12px;font-size:11px;word-break:break-all;color:var(--text-light);margin-bottom:10px;line-height:1.5;border:1px solid var(--border)}
+.inline-field{width:100%;border:1px solid transparent;border-radius:6px;padding:5px 7px;font-size:14px;font-weight:500;color:var(--text);background:transparent;transition:border-color .15s,background .15s;font-family:inherit;resize:none}
+.inline-field:hover{border-color:var(--border);background:white}
+.inline-field:focus{outline:none;border-color:var(--primary-light);background:white;box-shadow:0 0 0 3px rgba(42,82,152,.08)}
+textarea.inline-field{min-height:52px}
+.statuts-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.statut-item label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:7px}
+.topbar-left{display:flex;align-items:center;gap:10px}
+.topbar-left h1{font-size:17px;font-weight:700}
+</style>
+</head>
+<body><div class="app">
+<aside class="sidebar">
+  <div class="sidebar-logo"><h2>CRM Formalites</h2><p>Cabinet d expertise comptable</p></div>
+  <nav class="sidebar-nav">
+    <a href="/dashboard.html"><span class="icon">📋</span> Tableau de bord</a>
+    <a href="/admin.html" id="adminLink" class="hidden"><span class="icon">⚙️</span> Parametres</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-name" id="userName"></div>
+    <div class="user-role" id="userRole"></div>
+    <button onclick="logout()">Se deconnecter</button>
+  </div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="/dashboard.html" class="btn btn-secondary btn-sm">← Retour</a>
+      <h1 id="pageTitle">Dossier</h1>
+      <span id="typeBadge"></span>
+    </div>
+    <div class="flex gap-8">
+      <button class="btn btn-danger btn-sm" onclick="deleteDossier()">Supprimer</button>
+    </div>
+  </div>
+  <div class="content">
+    <div id="alertGlobal" style="position:fixed;top:16px;right:24px;z-index:999;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.15);display:none;pointer-events:none"></div>
+    <div class="dossier-layout">
+      <!-- Colonne gauche -->
+      <div>
+        <!-- Client -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Client</span></div>
+          <div class="section-body">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Nom de l'entreprise</label>
+                <input type="text" id="e_nom" class="inline-field" onblur="autoSave()">
+              </div>
+              <div class="info-item">
+                <label>Type de formalité</label>
+                <div id="bs_type_wrap"></div>
+              </div>
+              <div class="info-item">
+                <label>Email</label>
+                <input type="email" id="e_email" class="inline-field" onblur="autoSave()">
+              </div>
+              <div class="info-item">
+                <label>Téléphone</label>
+                <input type="tel" id="e_tel" class="inline-field" onblur="autoSave()">
+              </div>
+              <div class="info-item" style="grid-column:1/-1">
+                <label>Notes internes</label>
+                <textarea id="e_notes" class="inline-field" rows="2" onblur="autoSave()"></textarea>
+              </div>
+              <div class="info-item">
+                <label>Créé par</label>
+                <span id="v_created_by" style="font-size:14px;font-weight:500">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statuts -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Statuts</span></div>
+          <div class="section-body">
+            <div class="statuts-grid">
+              <div class="statut-item">
+                <label>Dossier</label>
+                <div id="bs_statut_wrap"></div>
+              </div>
+              <div class="statut-item">
+                <label>Documents</label>
+                <div id="bs_docs_wrap"></div>
+              </div>
+              <div class="statut-item" id="inpi_statut_col">
+                <label>INPI / RNE</label>
+                <div id="bs_inpi_wrap"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- INPI motif -->
+        <div class="section" id="inpiCard">
+          <div class="section-header"><span class="section-title">INPI / RNE — Motif de rejet</span></div>
+          <div class="section-body">
+            <input type="text" id="inpi_comment" class="inline-field" placeholder="Laisser vide si non rejeté" onblur="saveInpi()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite -->
+      <div>
+        <!-- Statut + date -->
+        <div class="section">
+          <div class="section-body" style="text-align:center;padding:18px 14px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light);margin-bottom:8px">Statut du dossier</div>
+            <span id="statutBadge" class="badge" style="font-size:13px;padding:5px 14px"></span>
+            <div style="font-size:11px;color:var(--text-light);margin-top:10px">Créé le <strong id="v_created"></strong></div>
+          </div>
+        </div>
+
+        <!-- Lien suivi -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Lien client</span></div>
+          <div class="section-body" style="padding:14px">
+            <div class="link-box" id="suiviLink">—</div>
+            <div class="flex gap-8">
+              <button class="btn btn-sm btn-secondary" onclick="copyLink()" style="flex:1">🔗 Copier</button>
+              <button class="btn btn-sm btn-primary" onclick="sendSuivi()" style="flex:1">✉ Envoyer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="section" id="notesCard">
+          <div class="section-header"><span class="section-title">Notes</span></div>
+          <div class="section-body" style="padding:12px 14px">
+            <div id="v_notes" style="font-size:13px;color:var(--text-light);white-space:pre-wrap;min-height:28px">—</div>
+          </div>
+        </div>
+
+        <!-- Historique -->
+        <div class="section">
+          <div class="section-header"><span class="section-title">Historique</span></div>
+          <div class="section-body" style="padding:4px 14px;max-height:340px;overflow-y:auto">
+            <div id="timeline"><div class="text-muted" style="font-size:13px;padding:10px 0">Chargement…</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Modal suivi -->
+<div class="modal-overlay hidden" id="modalSuivi">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header"><h3>Envoyer un email de suivi</h3><button class="modal-close" onclick="closeModal('modalSuivi')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-light);margin-bottom:14px">Un email sera envoyé au client avec le lien de suivi de son dossier.</p>
+      <div class="form-group"><label class="form-label">Message</label><textarea id="suiviMessage" class="form-control" rows="4">Votre dossier a été mis à jour. Vous pouvez suivre son avancement via le lien ci-dessous.</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalSuivi')">Annuler</button>
+      <button class="btn btn-primary" onclick="doSendSuivi()">Envoyer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const id = new URLSearchParams(location.search).get('id');
+let dossierData = null, currentUser = null;
+
+const LBL_DOCS   = {a_rediger:'À rédiger', redige:'Rédigés', envoye:'Envoyés', signe:'Signés ✓'};
+const LBL_STATUT = {en_cours:'En cours', termine:'Terminé', suspendu:'Suspendu'};
+const LBL_TYPE   = {creation:'Création', modification:'Modification', cessation:'Cessation'};
+const LBL_INPI   = {en_attente:'En attente', valide:'Validé', rejete:'Rejeté'};
+const BADGE_COLORS = {
+  creation:   ['#ede9fe','#6d28d9'],
+  modification:['var(--warning-bg)','var(--warning)'],
+  cessation:  ['var(--danger-bg)','var(--danger)'],
+  en_cours:   ['var(--info-bg)',    'var(--info)'],
+  termine:    ['var(--success-bg)', 'var(--success)'],
+  suspendu:   ['#f3f4f6',           'var(--gray)'],
+  a_rediger:  ['#f3f4f6',           'var(--gray)'],
+  redige:     ['var(--info-bg)',    'var(--info)'],
+  envoye:     ['var(--warning-bg)', 'var(--warning)'],
+  signe:      ['var(--success-bg)', 'var(--success)'],
+  en_attente: ['var(--warning-bg)', 'var(--warning)'],
+  valide:     ['var(--success-bg)', 'var(--success)'],
+  rejete:     ['var(--danger-bg)',  'var(--danger)'],
+};
+
+// État courant des badge-selects
+let _bs = { statut: 'en_cours', docs: 'a_rediger', inpi: 'en_attente', type: 'creation' };
+let _openBs = null;
+
+function makeBs(uid, value, options, lbl, onSelect) {
+  const [bg, col] = BADGE_COLORS[value] || ['#f3f4f6','var(--gray)'];
+  const opts = options.map(v => {
+    const [vbg,vcol] = BADGE_COLORS[v]||['#f3f4f6','var(--gray)'];
+    return `<div class="bs-option${v===value?' current':''}" onclick="${onSelect}('${v}')" style="color:${vcol}">
+      <span class="bs-option-dot" style="background:${vcol}"></span>${lbl[v]}
+    </div>`;
+  }).join('');
+  return `<div class="bs" id="${uid}">
+    <button class="bs-trigger" id="${uid}_t" style="background:${bg};color:${col}" onclick="toggleBs('${uid}')">${lbl[value]}<span class="bs-arrow">▼</span></button>
+    <div class="bs-menu" id="${uid}_m">${opts}</div>
+  </div>`;
+}
+
+function toggleBs(uid) {
+  const m = document.getElementById(uid+'_m');
+  const t = document.getElementById(uid+'_t');
+  if (!m||!t) return;
+  if (_openBs && _openBs !== uid) {
+    const pm = document.getElementById(_openBs+'_m');
+    if (pm) pm.classList.remove('open');
+  }
+  const isOpen = m.classList.contains('open');
+  if (!isOpen) {
+    const rect = t.getBoundingClientRect();
+    m.style.display='block'; m.style.left=rect.left+'px'; m.style.top='-9999px';
+    m.style.top = (rect.top - m.offsetHeight - 4)+'px';
+  }
+  m.classList.toggle('open', !isOpen);
+  _openBs = isOpen ? null : uid;
+}
+
+document.addEventListener('click', e => {
+  if (_openBs && !e.target.closest('.bs')) {
+    const pm = document.getElementById(_openBs+'_m');
+    if (pm) pm.classList.remove('open');
+    _openBs = null;
+  }
+});
+
+function renderBs(field, value) {
+  _bs[field] = value;
+  const configs = {
+    type:   { wrap:'bs_type_wrap',   uid:'bs_type',   opts:['creation','modification','cessation'], lbl:LBL_TYPE,   fn:'selectType' },
+    statut: { wrap:'bs_statut_wrap', uid:'bs_statut', opts:['en_cours','termine','suspendu'],       lbl:LBL_STATUT, fn:'selectStatut' },
+    docs:   { wrap:'bs_docs_wrap',   uid:'bs_docs',   opts:['a_rediger','redige','envoye','signe'], lbl:LBL_DOCS,   fn:'selectDocs' },
+    inpi:   { wrap:'bs_inpi_wrap',   uid:'bs_inpi',   opts:['en_attente','valide','rejete'],        lbl:LBL_INPI,   fn:'selectInpi' },
+  };
+  const c = configs[field];
+  document.getElementById(c.wrap).innerHTML = makeBs(c.uid, value, c.opts, c.lbl, c.fn);
+}
+
+async function selectType(v) {
+  closeBs(); renderBs('type', v);
+  document.getElementById('typeBadge').innerHTML = '<span class="badge badge-'+v+'" style="font-size:12px">'+LBL_TYPE[v]+'</span>';
+  const isCess = v === 'cessation';
+  document.getElementById('inpiCard').classList.toggle('hidden', isCess);
+  document.getElementById('inpi_statut_col').classList.toggle('hidden', isCess);
+  const res = await fetch('/api/dossiers/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:v})});
+  if (res.ok) showAlert('Type mis à jour'); else showAlert('Erreur','error');
+}
+
+async function selectStatut(v) {
+  closeBs(); renderBs('statut', v);
+  const sb = document.getElementById('statutBadge');
+  sb.className='badge badge-'+v; sb.textContent=LBL_STATUT[v];
+  const res = await fetch('/api/dossiers/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut_global:v})});
+  if (res.ok) showAlert('Statut mis à jour'); else showAlert('Erreur','error');
+}
+
+async function selectDocs(v) {
+  closeBs(); renderBs('docs', v);
+  const res = await fetch('/api/dossiers/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut_docs:v})});
+  if (res.ok) showAlert('Documents mis à jour'); else showAlert('Erreur','error');
+}
+
+async function selectInpi(v) {
+  closeBs(); renderBs('inpi', v);
+  const res = await fetch('/api/dossiers/'+id+'/inpi',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut:v,commentaire:document.getElementById('inpi_comment').value})});
+  if (res.ok) showAlert('INPI mis à jour'); else showAlert('Erreur INPI','error');
+}
+
+async function saveInpi() {
+  const res = await fetch('/api/dossiers/'+id+'/inpi',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({statut:_bs.inpi,commentaire:document.getElementById('inpi_comment').value})});
+  if (res.ok) showAlert('INPI mis à jour'); else showAlert('Erreur INPI','error');
+}
+
+function closeBs() {
+  if (_openBs) { const pm=document.getElementById(_openBs+'_m'); if(pm) pm.classList.remove('open'); _openBs=null; }
+}
+
+async function init() {
+  const me = await fetch('/api/auth/me').then(r=>r.json());
+  if (me.error) { window.location.href='/'; return; }
+  currentUser = me;
+  document.getElementById('userName').textContent = me.prenom+' '+me.nom;
+  document.getElementById('userRole').textContent = me.role==='admin' ? 'Administrateur' : 'Collaborateur';
+  if (me.role==='admin') document.getElementById('adminLink').classList.remove('hidden');
+  loadDossier();
+}
+
+async function loadDossier() {
+  const data = await fetch('/api/dossiers/'+id).then(r=>r.json());
+  if (data.error) { alert(data.error); window.location.href='/dashboard.html'; return; }
+  dossierData = data; render();
+}
+
+function render() {
+  const {dossier, inpi, logs} = dossierData;
+  document.title = dossier.nom_entreprise + ' - CRM';
+  document.getElementById('pageTitle').textContent = dossier.nom_entreprise;
+  document.getElementById('typeBadge').innerHTML = '<span class="badge badge-'+dossier.type+'" style="font-size:12px">'+LBL_TYPE[dossier.type]+'</span>';
+
+  document.getElementById('e_nom').value   = dossier.nom_entreprise || '';
+  document.getElementById('e_email').value = dossier.client_email || '';
+  document.getElementById('e_tel').value   = dossier.telephone || '';
+  document.getElementById('e_notes').value = dossier.notes || '';
+  document.getElementById('v_created_by').textContent = dossier.created_nom || '—';
+  document.getElementById('v_created').textContent    = fmt(dossier.created_at);
+  document.getElementById('v_notes').textContent      = dossier.notes || 'Aucune note';
+  document.getElementById('suiviLink').textContent    = location.origin+'/suivi.html?t='+dossier.token_suivi;
+
+  // Statut dossier (colonne droite)
+  const sb = document.getElementById('statutBadge');
+  sb.className = 'badge badge-'+dossier.statut_global;
+  sb.textContent = LBL_STATUT[dossier.statut_global] || dossier.statut_global;
+
+  // Badge-selects
+  renderBs('type',   dossier.type || 'creation');
+  renderBs('statut', dossier.statut_global || 'en_cours');
+  renderBs('docs',   dossier.statut_docs || 'a_rediger');
+
+  const isCess = dossier.type === 'cessation';
+  document.getElementById('inpiCard').classList.toggle('hidden', isCess);
+  document.getElementById('inpi_statut_col').classList.toggle('hidden', isCess);
+  if (!isCess) {
+    renderBs('inpi', inpi ? inpi.statut : 'en_attente');
+    document.getElementById('inpi_comment').value = inpi ? (inpi.commentaire || '') : '';
+  }
+
+  renderTimeline(logs);
+}
+
+function renderTimeline(logs) {
+  const el = document.getElementById('timeline');
+  if (!logs || !logs.length) { el.innerHTML='<div style="font-size:12px;color:var(--text-light);padding:8px 0">Aucune action</div>'; return; }
+  el.innerHTML = logs.map(l=>`
+    <div class="tl-item">
+      <div class="tl-dot"></div>
+      <div>
+        <div class="tl-action">${l.action.replace(/_/g,' ')}</div>
+        ${l.details ? '<div class="tl-detail">'+l.details+'</div>' : ''}
+        <div class="tl-detail">${l.user_nom||'Système'} · ${fmtDT(l.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function autoSave() {
+  // N'envoie QUE les champs texte — les badge-selects gèrent leurs propres champs
+  const res = await fetch('/api/dossiers/'+id, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+    nom_entreprise: document.getElementById('e_nom').value,
+    email_client: document.getElementById('e_email').value,
+    telephone: document.getElementById('e_tel').value,
+    notes: document.getElementById('e_notes').value
+  })});
+  if (res.ok) {
+    document.getElementById('pageTitle').textContent = document.getElementById('e_nom').value;
+    document.getElementById('v_notes').textContent = document.getElementById('e_notes').value || 'Aucune note';
+    showAlert('Enregistré');
+  } else showAlert('Erreur sauvegarde','error');
+}
+
+function sendSuivi() { document.getElementById('modalSuivi').classList.remove('hidden'); }
+async function doSendSuivi() {
+  const res = await fetch('/api/dossiers/'+id+'/send-suivi',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:document.getElementById('suiviMessage').value})});
+  closeModal('modalSuivi');
+  if (res.ok) showAlert('Email envoyé au client');
+  else { const d=await res.json(); showAlert(d.error||'Erreur envoi email','error'); }
+}
+
+function copyLink() {
+  const lien = location.origin+'/suivi.html?t='+(dossierData?.dossier?.token_suivi||'');
+  navigator.clipboard.writeText(lien).then(()=>showAlert('Lien copié !'));
+}
+
+async function deleteDossier() {
+  if (!confirm('Supprimer définitivement ce dossier ?')) return;
+  const res = await fetch('/api/dossiers/'+id,{method:'DELETE'});
+  if (res.ok) window.location.href='/dashboard.html';
+}
+
+function closeModal(mid) { document.getElementById(mid).classList.add('hidden'); }
+function showAlert(msg, type='success') {
+  const el = document.getElementById('alertGlobal');
+  el.style.background = type==='success' ? 'var(--success-bg)' : 'var(--danger-bg)';
+  el.style.color = type==='success' ? 'var(--success)' : 'var(--danger)';
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.display='none'; }, 2500);
+}
+async function logout() { await fetch('/api/auth/logout',{method:'POST'}); window.location.href='/'; }
+function fmt(d) { return d ? new Date(d).toLocaleDateString('fr-FR') : '—'; }
+function fmtDT(d) { if(!d) return '—'; const dt=new Date(d); return dt.toLocaleDateString('fr-FR')+' à '+dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+init();
+</script></body></html>
