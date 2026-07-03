@@ -7,7 +7,9 @@ const { sendMailSuivi } = require('../mailer');
 const { BASE_URL } = require('../config');
 
 async function log(dossier_id, user_id, action, details) {
-  await db.prepare('INSERT INTO audit_log (dossier_id,user_id,action,details) VALUES (?,?,?,?)').run(dossier_id,user_id,action,details||null);
+  try {
+    await db.prepare('INSERT INTO audit_log (dossier_id,user_id,action,details) VALUES (?,?,?,?)').run(dossier_id,user_id,action,details||null);
+  } catch(e) { console.error('log error:', e.message); }
 }
 
 router.get('/', auth, async (req, res) => {
